@@ -114,18 +114,27 @@ parts:
       locale-gen en_US.UTF-8
       export DEBIAN_FRONTEND=noninteractive
       export LANG=en_US.UTF-8
-      wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
-      tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
-      rm tpm2-tss-3.1.0.tar.gz && cd tpm2-tss
-      ./configure --with-udevrulesdir=/etc/udev/rules.d
-      make -j$(nproc)
-      make install
-      sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
-      udevadm control --reload-rules && sudo udevadm trigger
-      ldconfig
-      apt install tpm2-tools
+#      wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
+#      tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
+#      rm tpm2-tss-3.1.0.tar.gz && cd tpm2-tss
+#      ./configure --with-udevrulesdir=/etc/udev/rules.d
+#      make -j$(nproc)
+#      make install
+#      sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
+#      udevadm control --reload-rules && sudo udevadm trigger
+#      ldconfig
+#      apt install tpm2-tools
       cd $SNAPCRAFT_PART_SRC
       make
+      mix local.rebar --force
+      mix local.hex --if-missing --force
+      export MIX_ENV=prod
+      mix deps.get
+      cd assets
+      npm ci
+      npm run deploy
+      cd -
+      mix phx.digest
       MIX_ENV=prod mix distillery.release
       VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
       tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL
