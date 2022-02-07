@@ -34,6 +34,22 @@ architectures:
   - build-on: amd64
     run-on: amd64
 
+package-repositories:
+  - type: apt
+    formats: [deb]
+    components: [contrib]
+    suites: [focal]
+    key-id: 434975BD900CCBE4F7EE1B1ED208507CA14F4FCA
+    url: https://packages.erlang-solutions.com/ubuntu
+  - type: apt
+    architectures: [amd64]
+    formats: [deb]
+    components: [multiverse]
+    suites: [focal]
+    key-server: hkp://keyserver.ubuntu.com:80
+    key-id: 7752A0722F457FB76C0F44985E08FBD8B5D6EC9C
+    url: http://downloads.scylladb.com/downloads/scylla/deb/ubuntu/scylladb-4.3
+
 apps:
   archethic-node:
     command: $SNAP/bin/archethic_node foreground
@@ -55,6 +71,7 @@ parts:
     source-branch: master
     source-type: git
     build-packages:
+      - locales
       - gnupg2
       - build-essential
       - zlib1g-dev
@@ -93,19 +110,6 @@ parts:
       - openssl
       - scylla
       - openjdk-8-jre-headless
-    package-repositories:
-      - type: apt
-        path: /erlang-solutions_2.0_all.deb
-        url: https://packages.erlang-solutions.com
-      - type: apt
-        components: [multiverse]
-        suites: [focal]
-        formats: [deb]
-        architectures: [amd64]
-        key-server: hkp://keyserver.ubuntu.com:80
-        key-id: 5e08fbd8b5d6ec9c
-        path: /downloads/scylla/deb/ubuntu/scylladb-4.3
-        url: http://downloads.scylladb.com
     override-build: |
       locale-gen en_US.UTF-8
       export DEBIAN_FRONTEND=noninteractive
