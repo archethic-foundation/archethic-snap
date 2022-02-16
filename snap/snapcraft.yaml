@@ -80,6 +80,7 @@ parts:
       - npm
       - openssl
       - libsodium23
+      - libsodium-dev
       - autoconf-archive
       - libcmocka0
       - libcmocka-dev
@@ -100,6 +101,14 @@ parts:
       - wget
       - esl-erlang
       - elixir
+    build-environment:
+      - DEBIAN_FRONTEND: 'noninteractive'
+      - LANG: 'en_US.UTF-8'
+      - MIX_ENV: 'prod'
+      - CFLAGS: ''
+      - CPPFLAGS: ''
+      - CXXFLAGS: ''
+      - LDFLAGS: ''
     stage-packages:
       - nodejs
       - npm
@@ -112,23 +121,20 @@ parts:
       - openjdk-8-jre-headless
     override-build: |
       locale-gen en_US.UTF-8
-      export DEBIAN_FRONTEND=noninteractive
-      export LANG=en_US.UTF-8
-#      wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
-#      tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
-#      rm tpm2-tss-3.1.0.tar.gz && cd tpm2-tss
-#      ./configure --with-udevrulesdir=/etc/udev/rules.d
-#      make -j$(nproc)
-#      make install
-#      sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
-#      udevadm control --reload-rules && sudo udevadm trigger
-#      ldconfig
-#      apt install tpm2-tools
-      cd $SNAPCRAFT_PART_SRC
+      wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
+      tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
+      rm tpm2-tss-3.1.0.tar.gz && cd tpm2-tss
+      ./configure --with-udevrulesdir=/etc/udev/rules.d
+      make -j$(nproc) 
+      make install
+      sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
+      udevadm control --reload-rules && sudo udevadm trigger
+      ldconfig
+      apt install -y tpm2-tools
+      cd -
       make
       mix local.rebar --force
       mix local.hex --if-missing --force
-      export MIX_ENV=prod
       mix deps.get
       cd assets
       npm ci
