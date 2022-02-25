@@ -52,7 +52,7 @@ package-repositories:
 
 apps:
   archethic-node:
-    command: $SNAP/bin/archethic_node foreground
+    command: bin/archethic_node foreground
 
 plugs:
   config-system:
@@ -105,43 +105,52 @@ parts:
       - DEBIAN_FRONTEND: 'noninteractive'
       - LANG: 'en_US.UTF-8'
       - MIX_ENV: 'prod'
+      - MIX_HOME: '/root/.mix'
       - CFLAGS: ''
       - CPPFLAGS: ''
       - CXXFLAGS: ''
       - LDFLAGS: ''
+      - PKG_CONFIG_PATH: ''
     stage-packages:
-      - nodejs
-      - npm
       - esl-erlang
       - elixir
-      - libsodium23
-      - libgmp-dev
       - openssl
       - scylla
       - openjdk-8-jre-headless
+      - libsodium23
+      - libwxgtk-webview3.0-gtk3-0v5
+      - libglu1-mesa
+      - unixodbc-dev
+      - tpm2-tools
     override-build: |
       locale-gen en_US.UTF-8
       wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
       tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
-      rm tpm2-tss-3.1.0.tar.gz && cd tpm2-tss
+      cd tpm2-tss
       ./configure --with-udevrulesdir=/etc/udev/rules.d
       make -j$(nproc) 
       make install
       sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
-      udevadm control --reload-rules && sudo udevadm trigger
+      udevadm control --reload-rules
+      udevadm trigger
       ldconfig
       apt install -y tpm2-tools
       cd -
       make
-      mix local.rebar --force
-      mix local.hex --if-missing --force
-      mix deps.get
+      mix local.hex --if-missing --force &
+      wait $!
+      mix local.rebar --if-missing --force &
+      wait $!
+      mix deps.get &
+      wait $!
       cd assets
+      npm install
       npm ci
       npm run deploy
       cd -
-      mix phx.digest
-      MIX_ENV=prod mix distillery.release
+      mix phx.digest &
+      wait $!
+      mix distillery.release &
+      wait $!
       VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
-      tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL
-      rm -rf .
+      tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL/

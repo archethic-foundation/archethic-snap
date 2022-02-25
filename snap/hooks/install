@@ -1,4 +1,8 @@
 #!/bin/sh
+set -e
+
+sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
+udevadm control --reload-rules && udevadm trigger
 
 update-java-alternatives --jre-headless -s java-1.8.0-openjdk-amd64
 
@@ -9,10 +13,19 @@ scylla_cpuset_setup --cpuset 2
 
 systemctl start scylla-server
 
+cd $SNAP
+seed=$(bin/archethic_node eval ":crypto.strong_rand_bytes(32)|>IO.inspect" | tr -d '\n')
+encoded_seed=$(bin/archethic_node eval "Base.encode16($seed)|>IO.inspect" | tr -d '\n')
+pub_key=$(bin/archethic_node eval "Tuple.to_list(ArchEthic.Crypto.generate_deterministic_keypair($seed))|>List.first|>IO.inspect" | tr -d '\n')
+encoded_pub_key=$(bin/archethic_node eval "Base.encode16($pub_key)|>IO.inspect" | tr -d '\n')
+cd -
+
+ip=$(curl -s 'https://api64.ipify.org')
+
 sh -c 'cat > /etc/default/archethic.env' << EOF
 
-    ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=
-    ARCHETHIC_CRYPTO_SEED=
+    ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=$ip:${encoded_pub_key//\"}
+    ARCHETHIC_CRYPTO_SEED=${encoded_seed//\"}
     ARCHETHIC_NETWORK_TYPE=testnet
     ARCHETHIC_CRYPTO_NODE_KEYSTORE_IMPL=SOFTWARE
     ARCHETHIC_NODE_ALLOWED_KEY_ORIGINS=SOFTWARE
