@@ -1,77 +1,42 @@
-#!/bin/sh
+#! /bin/bash
 set -e
 
-sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
-udevadm control --reload-rules && udevadm trigger
+cp -a $SNAP/. $SNAP_DATA/
 
-update-java-alternatives --jre-headless -s java-1.8.0-openjdk-amd64
+mkdir -p $SNAP_DATA/usr/lib/locale
 
-scylla_setup --no-raid-setup --no-ec2-check --no-kernel-check --no-verify-package --no-sysconfig-setup --io-setup=1 --no-version-check --no-cpuscaling-setup --no-fstrim-setup --no-memory-setup --no-swap-setup
+$SNAP/usr/sbin/locale-gen en_US.UTF-8
+$SNAP/usr/sbin/update-locale LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
 
-scylla_memory_setup --memory=8G
-scylla_cpuset_setup --cpuset 2
-
-systemctl start scylla-server
-
-cd $SNAP
+cd $SNAP_DATA
 seed=$(bin/archethic_node eval ":crypto.strong_rand_bytes(32)|>IO.inspect" | tr -d '\n')
 encoded_seed=$(bin/archethic_node eval "Base.encode16($seed)|>IO.inspect" | tr -d '\n')
-pub_key=$(bin/archethic_node eval "Tuple.to_list(ArchEthic.Crypto.generate_deterministic_keypair($seed))|>List.first|>IO.inspect" | tr -d '\n')
-encoded_pub_key=$(bin/archethic_node eval "Base.encode16($pub_key)|>IO.inspect" | tr -d '\n')
-cd -
+#pub_key=$(bin/archethic_node eval "Tuple.to_list(ArchEthic.Crypto.generate_deterministic_keypair($seed))|>List.first|>IO.inspect" | tr -d '\n')
+#encoded_pub_key=$(bin/archethic_node eval "Base.encode16($pub_key)|>IO.inspect" | tr -d '\n')
 
-ip=$(curl -s 'https://api64.ipify.org')
+#ip=$($SNAP_DATA/usr/bin/curl -s 'https://api64.ipify.org')
 
-sh -c 'cat > /etc/default/archethic.env' << EOF
+mkdir -p $SNAP_DATA/opt/data
 
-    ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=$ip:${encoded_pub_key//\"}
+mkdir -p $SNAP_DATA/etc/default
+
+cd $SNAP_DATA/etc/default
+
+bash -c 'cat > archethic.env' << EOF
+    LANG=en_US.UTF-8
+    LANGUAGE=en_US
+    LC_ALL=en_US.UTF-8
+    MIX_ENV=prod
+    ERLANG_COOKIE=$ERLANG_COOKIE
+    ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=54.39.179.91:30002:00011D967D71B2E135C84206DDD108B5925A2CD99C8EBC5AB5D8FD2EC9400CE3C98A:tcp
     ARCHETHIC_CRYPTO_SEED=${encoded_seed//\"}
     ARCHETHIC_NETWORK_TYPE=testnet
     ARCHETHIC_CRYPTO_NODE_KEYSTORE_IMPL=SOFTWARE
     ARCHETHIC_NODE_ALLOWED_KEY_ORIGINS=SOFTWARE
-    ARCHETHIC_BEACON_CHAIN_SLOT_TIMER_INTERVAL="*/10 * * * * *"
-    ARCHETHIC_BEACON_CHAIN_SUMMARY_TIMER_INTERVAL="0 * * * * *"
-    ARCHETHIC_ORACLE_CHAIN_POLLING_INTERVAL="*/10 * * * * *"
-    ARCHETHIC_ORACLE_CHAIN_SUMMARY_INTERVAL="50 * * * * *"
-    ARCHETHIC_SHARED_SECRETS_RENEWAL_SCHEDULER_INTERVAL="40 * * * * * *"
-    ARCHETHIC_SHARED_SECRETS_APPLICATION_INTERVAL="0 * * * * * *"
-    ARCHETHIC_SELF_REPAIR_SCHEDULER_INTRERVAL="5 * * * * * *"
-    ARCHETHIC_REWARD_SCHEDULER_INTERVAL="30 * * * * *"
+    ARCHETHIC_NETWORKING_IMPL=IPFY
+    ARCHETHIC_NETWORKING_PORT_FORWARDING=false
+    ARCHETHIC_MUT_DIR=$SNAP_DATA/opt/data
 EOF
 
-sh -c 'cat > /etc/systemd/system/archethic.service' << EOF
+cd -
 
-    [Unit]
-    Description=ARCHEthic service
-    After=local-fs.target network.target
-
-    [Service]
-    Type=simple
-    User=$USER
-    Group=$USER
-
-    WorkingDirectory=$SNAP
-
-    ExecStart=$SNAP/bin/archethic_node foreground
-    ExecStop=$SNAP/bin/archethic_node stop
-
-    EnvironmentFile=/etc/default/archethic.env
-    Environment=LANG=en_US.utf8
-    Environment=MIX_ENV=prod
-    Environment=ERLANG_COOKIE=$ERLANG_COOKIE
-
-    Restart=on-failure
-    RemainAfterExit=yes
-    RestartSec=5
-
-    LimitNOFILE=65535
-    UMask=0027
-    SyslogIdentifier=archethic
-
-    [Install]
-    WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable archethic
-systemctl start archethic
