@@ -1,0 +1,20 @@
+#! /bin/bash
+
+cd $SNAP_DATA
+
+export $(grep -v '^#' etc/default/archethic.env | xargs -d '\n')
+
+#ip=$($SNAP_DATA/usr/bin/curl -s 'https://api64.ipify.org)
+
+export ARCHETHIC_BEACON_CHAIN_SLOT_TIMER_INTERVAL="*/10 * * * * *"
+export ARCHETHIC_BEACON_CHAIN_SUMMARY_TIMER_INTERVAL="0 * * * * *"
+export ARCHETHIC_ORACLE_CHAIN_POLLING_INTERVAL="*/10 * * * * *"
+export ARCHETHIC_ORACLE_CHAIN_SUMMARY_INTERVAL="0 * * * * *"
+export ARCHETHIC_SHARED_SECRETS_RENEWAL_SCHEDULER_INTERVAL="40 * * * * * *"
+export ARCHETHIC_SHARED_SECRETS_APPLICATION_INTERVAL="0 * * * * * *"
+export ARCHETHIC_SELF_REPAIR_SCHEDULER_INTRERVAL="5 * * * * * *"
+export ARCHETHIC_REWARD_SCHEDULER_INTERVAL="30 * * * * *"
+
+cd -
+
+exec "$@"

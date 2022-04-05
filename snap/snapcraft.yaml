@@ -41,28 +41,29 @@ package-repositories:
     suites: [focal]
     key-id: 434975BD900CCBE4F7EE1B1ED208507CA14F4FCA
     url: https://packages.erlang-solutions.com/ubuntu
-  - type: apt
-    architectures: [amd64]
-    formats: [deb]
-    components: [multiverse]
-    suites: [focal]
-    key-server: hkp://keyserver.ubuntu.com:80
-    key-id: 7752A0722F457FB76C0F44985E08FBD8B5D6EC9C
-    url: http://downloads.scylladb.com/downloads/scylla/deb/ubuntu/scylladb-4.3
 
 apps:
   archethic-node:
-    command: bin/archethic_node foreground
+    daemon: simple
+    command-chain:
+      - bin/set-config
+    command: bin/archethic_node_start
+    stop-command: bin/archethic_node_stop
+    refresh-mode: endure
+    plugs:
+      - network
+      - network-bind
+      - tpm
 
-plugs:
-  config-system:
-   interface: system-files
-   write:
-     - /etc
-
-hooks:
-  install:
-    plugs: [network,network-bind,hardware-observe,config-system]
+layout:
+  /usr/lib/locale:
+    bind: $SNAP_DATA/usr/lib/locale
+  /usr/share/i18n/SUPPORTED:
+    symlink: $SNAP/usr/share/i18n/SUPPORTED
+  /usr/share/i18n/locales:
+    symlink: $SNAP/usr/share/i18n/locales
+  /usr/share/i18n/charmaps:
+    symlink: $SNAP/usr/share/i18n/charmaps
 
 parts:
   archethic-node:
@@ -112,18 +113,18 @@ parts:
       - LDFLAGS: ''
       - PKG_CONFIG_PATH: ''
     stage-packages:
+      - locales
       - esl-erlang
       - elixir
       - openssl
-      - scylla
-      - openjdk-8-jre-headless
       - libsodium23
+      - tpm2-tools 
       - libwxgtk-webview3.0-gtk3-0v5
       - libglu1-mesa
-      - unixodbc-dev
-      - tpm2-tools
+      - unixodbc-dev 
     override-build: |
       locale-gen en_US.UTF-8
+      update-locale LC_ALL=en_US.UTF-8
       wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
       tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
       cd tpm2-tss
@@ -154,3 +155,16 @@ parts:
       wait $!
       VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
       tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL/
+      echo '#! /bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      echo '' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      echo 'cd $SNAP_DATA' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      echo 'bin/archethic_node foreground' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      echo 'exec "$@"' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      echo '#! /bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      echo '' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      echo 'cd $SNAP_DATA' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      echo 'bin/archethic_node stop' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      echo 'exec "$@"' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      cp -p $SNAPCRAFT_PROJECT_DIR/snap/local/set-config $SNAPCRAFT_PART_INSTALL/bin/
