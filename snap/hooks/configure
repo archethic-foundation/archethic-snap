@@ -1,0 +1,32 @@
+#!/bin/bash
+
+http_port="$(snapctl get ports.http)"
+p2p_port="$(snapctl get ports.p2p)"
+
+if [ -z "$http_port" ]; then
+    http_port=40000
+fi
+if [ -z "$p2p_port" ]; then
+    p2p_port=30002
+fi
+
+cd $SNAP_DATA/etc/default
+
+bash -c 'cat > archethic.env' << EOF
+    ARCHETHIC_HTTP_PORT=$http_port
+    ARCHETHIC_P2P_PORT=$p2p_port
+    LANG=en_US.UTF-8
+    LANGUAGE=en_US
+    LC_ALL=en_US.UTF-8
+    MIX_ENV=prod
+    ERLANG_COOKIE=$ERLANG_COOKIE
+    ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=54.39.179.91:30002:00011D967D71B2E135C84206DDD108B5925A2CD99C8EBC5AB5D8FD2EC9400CE3C98A:tcp
+    ARCHETHIC_CRYPTO_SEED=${encoded_seed//\"}
+    ARCHETHIC_CRYPTO_NODE_KEYSTORE_IMPL=SOFTWARE
+    ARCHETHIC_NODE_ALLOWED_KEY_ORIGINS=SOFTWARE
+    ARCHETHIC_NETWORKING_IMPL=IPFY
+    ARCHETHIC_NETWORKING_PORT_FORWARDING=false
+    ARCHETHIC_NETWORK_TYPE=testnet
+    ARCHETHIC_MUT_DIR=$SNAP_DATA/opt/data
+
+EOF
