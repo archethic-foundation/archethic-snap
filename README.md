@@ -1,8 +1,8 @@
-# ArchEthic Snap Package
+# Archethic Snap Package
 
-Welcome to the ArchEthic Node snap package! This tool enables you to install and run an ArchEthic node very easily. ArchEthic is a next generation of blockchain focused on rapid scalability and easy accessibility.
+Welcome to the Archethic Node snap package! This tool enables you to install and run an Archethic node very easily. Archethic is a next generation of blockchain focused on rapid scalability and easy accessibility.
 
-## ArchEthic features:
+## Archethic features:
 
 ✅ Fast transaction processing (> 1M tps)
 
@@ -56,7 +56,7 @@ After building the snap, a .snap file will be added in the project root. Install
 ```sh
 sudo snap install --devmode archethic-node_${VERSION}_amd64.snap
 ```
-> **VERSION** → ArchEthic snap version
+> **VERSION** → Archethic snap version
 
 ## Coming Soon
 
