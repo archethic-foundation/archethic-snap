@@ -3,10 +3,10 @@ set -e
 
 cp -a $SNAP/. $SNAP_DATA/
 
-mkdir -p $SNAP_DATA/usr/lib/locale
+# mkdir -p $SNAP_DATA/usr/lib/locale
 
-$SNAP/usr/sbin/locale-gen en_US.UTF-8
-$SNAP/usr/sbin/update-locale LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
+# $SNAP/usr/sbin/locale-gen en_US.UTF-8
+# $SNAP/usr/sbin/update-locale LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
 
 cd $SNAP_DATA
 seed=$(bin/archethic_node eval ":crypto.strong_rand_bytes(32)|>IO.inspect" | tr -d '\n')
@@ -30,11 +30,11 @@ bash -c 'cat > archethic.env' << EOF
     ERLANG_COOKIE=$ERLANG_COOKIE
     ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=54.39.179.91:30002:00011D967D71B2E135C84206DDD108B5925A2CD99C8EBC5AB5D8FD2EC9400CE3C98A:tcp
     ARCHETHIC_CRYPTO_SEED=${encoded_seed//\"}
-    ARCHETHIC_NETWORK_TYPE=testnet
     ARCHETHIC_CRYPTO_NODE_KEYSTORE_IMPL=SOFTWARE
     ARCHETHIC_NODE_ALLOWED_KEY_ORIGINS=SOFTWARE
     ARCHETHIC_NETWORKING_IMPL=IPFY
     ARCHETHIC_NETWORKING_PORT_FORWARDING=false
+    ARCHETHIC_NETWORK_TYPE=testnet
     ARCHETHIC_MUT_DIR=$SNAP_DATA/opt/data
 EOF
 
