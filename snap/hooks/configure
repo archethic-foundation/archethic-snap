@@ -4,10 +4,40 @@ http_port="$(snapctl get ports.http)"
 p2p_port="$(snapctl get ports.p2p)"
 
 if [ -z "$http_port" ]; then
-    http_port=40000
+    logger -t ${SNAP_NAME} "WARNING: ports.http is not set"
 fi
+
 if [ -z "$p2p_port" ]; then
-    p2p_port=30002
+    logger -t ${SNAP_NAME} "WARNING: ports.p2p is not set"
+fi
+
+if [ -z "$http_port" ] && [ -z "$p2p_port" ]; then
+    exit 0
+fi
+
+if [ "$http_port" -eq "$p2p_port" ]; then
+    echo "ports.http and ports.p2p cannot be same"
+    exit 1
+fi
+
+(nc -z 0.0.0.0 $http_port)
+port_status=$?
+if [ "$http_port" -lt "32768" ] || [ "$http_port" -gt "60999" ]; then
+    echo "Port $http_port is invalid. Make sure it is within range [32768-60999]"
+    exit 1
+elif [ "$port_status" -eq "0" ]; then
+    echo "Port $http_port is not available. Please try different port within range [32768-60999]"
+    exit 1
+fi
+
+(nc -z 0.0.0.0 $p2p_port)
+port_status=$?
+if [ "$p2p_port" -lt "32768" ] || [ "$p2p_port" -gt "60999" ]; then
+    echo "Port $p2p_port is invalid. Make sure it is within range [32768-60999]"
+    exit 1
+elif [ "$port_status" -eq "0" ]; then
+    echo "Port $p2p_port is not available. Please try different port within range [32768-60999]"
+    exit 1
 fi
 
 cd $SNAP_DATA/etc/default
