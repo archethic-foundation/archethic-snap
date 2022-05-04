@@ -27,7 +27,7 @@ description: |
 
     ArchEthic Foundation
     https://www.archethic.net
-grade: stable 
+grade: stable
 confinement: strict # use 'strict' once you have the right plugs and slots
 adopt-info: archethic-node
 architectures:
