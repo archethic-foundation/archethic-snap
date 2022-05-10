@@ -1,41 +1,41 @@
-#! /bin/bash
+#!/bin/bash
 set -e
 
-cp -a $SNAP/. $SNAP_DATA/
+cp -a $SNAP/. $SNAP_COMMON/
 
-# mkdir -p $SNAP_DATA/usr/lib/locale
+# mkdir -p $SNAP_COMMON/usr/lib/locale
 
 # $SNAP/usr/sbin/locale-gen en_US.UTF-8
 # $SNAP/usr/sbin/update-locale LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8
 
-cd $SNAP_DATA
+cd $SNAP_COMMON
 seed=$(bin/archethic_node eval ":crypto.strong_rand_bytes(32)|>IO.inspect" | tr -d '\n')
 encoded_seed=$(bin/archethic_node eval "Base.encode16($seed)|>IO.inspect" | tr -d '\n')
 #pub_key=$(bin/archethic_node eval "Tuple.to_list(ArchEthic.Crypto.generate_deterministic_keypair($seed))|>List.first|>IO.inspect" | tr -d '\n')
 #encoded_pub_key=$(bin/archethic_node eval "Base.encode16($pub_key)|>IO.inspect" | tr -d '\n')
 
-#ip=$($SNAP_DATA/usr/bin/curl -s 'https://api64.ipify.org')
+#ip=$($SNAP_COMMON/usr/bin/curl -s 'https://api64.ipify.org')
 
-mkdir -p $SNAP_DATA/opt/data
+mkdir -p $SNAP_COMMON/opt/data
 
-mkdir -p $SNAP_DATA/etc/default
+mkdir -p $SNAP_COMMON/etc/default
 
-cd $SNAP_DATA/etc/default
+cd $SNAP_COMMON/etc/default
 
 bash -c 'cat > archethic.env' << EOF
-    LANG=en_US.UTF-8
-    LANGUAGE=en_US
-    LC_ALL=en_US.UTF-8
-    MIX_ENV=prod
-    ERLANG_COOKIE=$ERLANG_COOKIE
-    ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=54.39.179.91:30002:00011D967D71B2E135C84206DDD108B5925A2CD99C8EBC5AB5D8FD2EC9400CE3C98A:tcp
-    ARCHETHIC_CRYPTO_SEED=${encoded_seed//\"}
-    ARCHETHIC_CRYPTO_NODE_KEYSTORE_IMPL=SOFTWARE
-    ARCHETHIC_NODE_ALLOWED_KEY_ORIGINS=SOFTWARE
-    ARCHETHIC_NETWORKING_IMPL=IPFY
-    ARCHETHIC_NETWORKING_PORT_FORWARDING=false
-    ARCHETHIC_NETWORK_TYPE=testnet
-    ARCHETHIC_MUT_DIR=$SNAP_DATA/opt/data
+LANG=en_US.UTF-8
+LANGUAGE=en_US
+LC_ALL=en_US.UTF-8
+MIX_ENV=prod
+ERLANG_COOKIE=$ERLANG_COOKIE
+ARCHETHIC_P2P_BOOTSTRAPPING_SEEDS=54.39.179.91:30002:00011D967D71B2E135C84206DDD108B5925A2CD99C8EBC5AB5D8FD2EC9400CE3C98A:tcp
+ARCHETHIC_CRYPTO_SEED=${encoded_seed//\"}
+ARCHETHIC_CRYPTO_NODE_KEYSTORE_IMPL=SOFTWARE
+ARCHETHIC_NODE_ALLOWED_KEY_ORIGINS=SOFTWARE
+ARCHETHIC_NETWORKING_IMPL=IPFY
+ARCHETHIC_NETWORKING_PORT_FORWARDING=false
+ARCHETHIC_NETWORK_TYPE=testnet
+ARCHETHIC_MUT_DIR=$SNAP_COMMON/opt/data
 EOF
 
 cd -
