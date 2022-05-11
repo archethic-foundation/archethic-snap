@@ -58,7 +58,7 @@ apps:
 
 layout:
   /usr/lib/locale:
-    bind: $SNAP_DATA/usr/lib/locale
+    bind: $SNAP_COMMON/usr/lib/locale
   /usr/share/i18n/SUPPORTED:
     symlink: $SNAP/usr/share/i18n/SUPPORTED
   /usr/share/i18n/locales:
@@ -157,15 +157,20 @@ parts:
       wait $!
       VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
       tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL/
-      echo '#! /bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      rm -rf _build/prod
+      mix distillery.release --upgrade &
+      wait $!
+      cp _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz $SNAPCRAFT_PART_INSTALL/releases/$VERSION/archethic_node.tar.gz
+      echo $VERSION >$SNAPCRAFT_PART_INSTALL/VERSION
+      echo '#!/bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
       echo '' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo 'cd $SNAP_DATA' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
+      echo 'cd $SNAP_COMMON' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
       echo 'bin/archethic_node foreground' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
       echo 'exec "$@"' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
       chmod +x $SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo '#! /bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      echo '#!/bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
       echo '' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      echo 'cd $SNAP_DATA' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
+      echo 'cd $SNAP_COMMON' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
       echo 'bin/archethic_node stop' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
       echo 'exec "$@"' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
       chmod +x $SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop

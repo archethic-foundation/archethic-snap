@@ -1,0 +1,4 @@
+#!/bin/bash
+
+snapctl unset ports.http
+snapctl unset ports.p2p
