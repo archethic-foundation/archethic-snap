@@ -124,7 +124,8 @@ parts:
       - libglu1-mesa
       - unixodbc-dev 
     override-build: |
-      snapcraftctl set-version "$(git describe --abbrev=0)"
+      VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
+      snapcraftctl set-version $VERSION
       locale-gen en_US.UTF-8
       update-locale LC_ALL=en_US.UTF-8
       wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
@@ -155,7 +156,6 @@ parts:
       wait $!
       mix distillery.release &
       wait $!
-      VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
       tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL/
       rm -rf _build/prod
       mix distillery.release --upgrade &
