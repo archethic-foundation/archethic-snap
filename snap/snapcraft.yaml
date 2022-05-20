@@ -70,7 +70,7 @@ parts:
   archethic-node:
     plugin: dump
     source: https://github.com/archethic-foundation/archethic-node.git
-    source-tag: 'v0.13.1'
+    source-branch: 'testnet'
     source-type: git
     build-packages:
       - locales
