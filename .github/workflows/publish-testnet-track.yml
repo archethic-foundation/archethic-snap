@@ -1,0 +1,18 @@
+name: publish-testnet-track
+on:
+  push:
+    branches: [ testnet ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: snapcore/action-build@v1
+        id: build
+      - uses: snapcore/action-publish@v1
+        with:
+            store_login: ${{ secrets.SNAP_TOKEN }}
+            snap: ${{ steps.build.outputs.snap }}
+            release: testnet/edge
