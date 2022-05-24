@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 cd $SNAP
 VERSION=$(cat VERSION)
@@ -9,4 +8,3 @@ cp $SNAP/releases/$VERSION/archethic_node.tar.gz $SNAP_COMMON/releases/$VERSION/
 
 cd $SNAP_COMMON
 bin/archethic_node upgrade $VERSION
-
