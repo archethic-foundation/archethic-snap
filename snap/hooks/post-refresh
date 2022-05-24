@@ -1,5 +1,16 @@
 #!/bin/bash
 
+CHANNEL=$($SNAP/usr/bin/curl -sS -X GET --unix-socket /run/snapd.socket "http://localhost/v2/snaps/archethic" | $SNAP/usr/bin/jq -r '.result.channel')
+
+cd $SNAP_COMMON/etc/default
+NETWORK_TYPE=$(sed -n 's/^ARCHETHIC_NETWORK_TYPE=//p' archethic.env)
+
+
+if [[ "$CHANNEL" != *"$NETWORK_TYPE"* ]]; then
+  echo "Switching channel is forbidden. To join another network uninstall the existing snap."
+  exit 1
+fi
+
 cd $SNAP
 VERSION=$(cat VERSION)
 
