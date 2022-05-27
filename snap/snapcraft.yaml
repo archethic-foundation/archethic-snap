@@ -1,10 +1,10 @@
 name: archethic
 base: core20
-summary: Official ArchEthic blockchain node software
+summary: Official Archethic blockchain node software
 description: |
-  Welcome to ArchEthic blockchain. This tool enables you to install and run an ArchEthic node. ArchEthic is a next generation of blockchain focused on rapid scalability and easy accessibility.
+  Welcome to Archethic blockchain. This tool enables you to install and run an Archethic node. Archethic is a next generation of blockchain focused on rapid scalability and easy accessibility.
     
-  ArchEthic features:
+  Archethic features:
 
     Fast transaction processing (> 1M tps)
 
@@ -25,7 +25,7 @@ description: |
 
   Maintained by:
 
-    ArchEthic Foundation
+    Archethic Foundation
     https://www.archethic.net
 grade: stable
 confinement: strict # use 'strict' once you have the right plugs and slots
