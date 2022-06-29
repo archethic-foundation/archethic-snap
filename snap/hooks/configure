@@ -2,6 +2,7 @@
 
 http_port="$(snapctl get ports.http)"
 p2p_port="$(snapctl get ports.p2p)"
+reward_address="$(snapctl get reward_address)"
 
 if [ -z "$http_port" ]; then
     logger -t ${SNAP_NAME} "WARNING: ports.http is not set"
@@ -11,12 +12,19 @@ if [ -z "$p2p_port" ]; then
     logger -t ${SNAP_NAME} "WARNING: ports.p2p is not set"
 fi
 
-if [ -z "$http_port" ] && [ -z "$p2p_port" ]; then
+if [ -z "$reward_address" ]; then
+    logger -t ${SNAP_NAME} "WARNING: reward_address is not set"
+fi
+
+if [ -z "$http_port" ] && [ -z "$p2p_port" ]  && [ -z "$reward_address" ]; then
     cd $SNAP_COMMON/etc/default
     http_port=$(sed -n 's/^ARCHETHIC_HTTP_PORT=//p' archethic.env)
     p2p_port=$(sed -n 's/^ARCHETHIC_P2P_PORT=//p' archethic.env)
+    reward_address=$(sed -n 's/^ARCHETHIC_REWARD_ADDRESS=//p' archethic.env)
+
     snapctl set ports.http=$http_port
     snapctl set ports.p2p=$p2p_port
+    snapctl set reward_address=$reward_address
     exit 0
 fi
 
@@ -47,8 +55,21 @@ fi
 
 cd $SNAP_COMMON/etc/default
 
-bash -c 'cat >> archethic.env' << EOF
-ARCHETHIC_HTTP_PORT=$http_port
-ARCHETHIC_P2P_PORT=$p2p_port
+if $(cat archethic.env | grep -q ARCHETHIC_HTTP_PORT); then
+    sed -i "s/ARCHETHIC_HTTP_PORT=.*/ARCHETHIC_HTTP_PORT=$http_port/g" archethic.env
+else
+    echo "ARCHETHIC_HTTP_PORT=$http_port" >> archethic.env
+fi
 
-EOF
+if $(cat archethic.env | grep -q ARCHETHIC_P2P_PORT); then
+    sed -i "s/ARCHETHIC_P2P_PORT=.*/ARCHETHIC_P2P_PORT=$p2p_port/g" archethic.env
+else
+    echo "ARCHETHIC_P2P_PORT=$p2p_port" >> archethic.env
+fi
+
+if $(cat archethic.env | grep -q ARCHETHIC_REWARD_ADDRESS); then
+    sed -i "s/ARCHETHIC_REWARD_ADDRESS=.*/ARCHETHIC_REWARD_ADDRESS=$reward_address/g" archethic.env
+else
+    echo "ARCHETHIC_REWARD_ADDRESS=$reward_address" >> archethic.env
+fi
+
