@@ -43,11 +43,18 @@ sudo snap set archethic ports.http=$HTTP_PORT
 sudo snap set archethic ports.p2p=$P2P_PORT
 ```
 
-#### 3. Finally start the service by running:
+#### 3. To configure reward address
+
+```sh
+sudo snap set archethic reward_address=$REWARD_ADDRESS
+```
+
+#### 4. Finally start the service by running:
 
 ```sh
 sudo snap start archethic
 ```
+
 ## Disclaimer
  
 Please note that this is a pre-release version which is
