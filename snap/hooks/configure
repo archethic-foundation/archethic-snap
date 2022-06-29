@@ -44,3 +44,11 @@ elif [ "$port_status" -eq "0" ]; then
     echo "Port $p2p_port is not available. Please try different port within range [32768-60999]"
     exit 1
 fi
+
+cd $SNAP_COMMON/etc/default
+
+bash -c 'cat >> archethic.env' << EOF
+ARCHETHIC_HTTP_PORT=$http_port
+ARCHETHIC_P2P_PORT=$p2p_port
+
+EOF
