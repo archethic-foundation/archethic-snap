@@ -70,39 +70,25 @@ parts:
   archethic-node:
     plugin: dump
     source: https://github.com/archethic-foundation/archethic-node.git
-    source-branch: 'testnet'
+    source-branch: 'develop'
     source-type: git
     build-packages:
-      - locales
-      - gnupg2
-      - build-essential
-      - zlib1g-dev
-      - libgmp-dev
-      - nodejs
-      - npm
-      - openssl
-      - libsodium23
-      - libsodium-dev
-      - autoconf-archive
-      - libcmocka0
-      - libcmocka-dev
-      - procps
-      - pkg-config
-      - gcc
-      - libtool
-      - automake
-      - libssl-dev
-      - uthash-dev
-      - autoconf
-      - doxygen
-      - libjson-c-dev
-      - libini-config-dev
-      - libcurl4-openssl-dev
-      - acl
       - git
       - wget
-      - esl-erlang=1:24.3.3-1
-      - elixir
+      # Required for Erlang/Elixir installation
+      - locales
+      - curl
+      - unzip
+      - libncurses5-dev
+      - libssl-dev
+      - erlang-dev
+      # Required for Archethic node C programs
+      - build-essential
+      - automake
+      - gcc
+      - libsodium-dev
+      - libgmp-dev
+      - libtss2-dev
     build-environment:
       - DEBIAN_FRONTEND: 'noninteractive'
       - LANG: 'en_US.UTF-8'
@@ -115,63 +101,52 @@ parts:
       - PKG_CONFIG_PATH: ''
     stage-packages:
       - locales
-      - esl-erlang=1:24.3.3-1
-      - elixir
       - openssl
-      - libsodium23
-      - tpm2-tools 
-      - libwxgtk-webview3.0-gtk3-0v5
-      - libglu1-mesa
-      - unixodbc-dev 
+      - libsodium-dev
+      - libtss2-dev 
     override-build: |
+      # Install asdf
+      git clone https://github.com/asdf-vm/asdf.git ~/.asdf 2> /dev/null || echo "Skip asdf install"
+      grep ". ~/.asdf/asdf.sh" ~/.profile || echo '. ~/.asdf/asdf.sh' >> ~/.profile
+      source ~/.profile
+      asdf update
+
+      asdf plugin add erlang || :
+      asdf plugin add elixir || :
+      asdf plugin add nodejs || :
+      asdf install
+
+      # Set the current version of asdf
+      ELIXIR_VERSION=$(asdf current elixir | awk '{print $2}')
+      ERLANG_VERSION=$(asdf current erlang | awk '{print $2}')
+      NODEJS_VERSION=$(asdf current nodejs | awk '{print $2}')
+
+      asdf global elixir $ELIXIR_VERSION
+      asdf global erlang $ERLANG_VERSION
+      asdf global nodejs $NODEJS_VERSION
+
       VERSION=$(grep 'version:' mix.exs | cut -d '"' -f2)
-      snapcraftctl set-version $VERSION
-      locale-gen en_US.UTF-8
-      update-locale LC_ALL=en_US.UTF-8
-      wget https://github.com/tpm2-software/tpm2-tss/releases/download/3.1.0/tpm2-tss-3.1.0.tar.gz
-      tar -xf tpm2-tss-3.1.0.tar.gz --one-top-level=tpm2-tss --strip-components 1
-      cd tpm2-tss
-      ./configure --with-udevrulesdir=/etc/udev/rules.d
-      make -j$(nproc) 
-      make install
-      sed -i "s/tss/$(whoami)/gi" /etc/udev/rules.d/tpm-udev.rules
-      udevadm control --reload-rules
-      udevadm trigger
-      ldconfig
-      apt install -y tpm2-tools
-      cd -
-      make
+
+      # Install updated versions of hex/rebar
       mix local.hex --if-missing --force &
       wait $!
       mix local.rebar --if-missing --force &
       wait $!
+      
+      # Fetch deps and compile
       mix deps.get &
       wait $!
-      cd assets
-      npm install
-      npm ci
-      npm run deploy
-      cd -
-      mix phx.digest &
+
+      # Builds WEB assets in production mode
+      npm ci --prefix assets
+      mix assets.saas &
       wait $!
+      mix assets.deploy &
+      wait $!
+
+      # Build release
       mix distillery.release &
       wait $!
       tar zxvf _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz -C $SNAPCRAFT_PART_INSTALL/
-      rm -rf _build/prod
-      mix distillery.release --upgrade &
-      wait $!
-      cp _build/prod/rel/archethic_node/releases/$VERSION/archethic_node.tar.gz $SNAPCRAFT_PART_INSTALL/releases/$VERSION/archethic_node.tar.gz
-      echo $VERSION >$SNAPCRAFT_PART_INSTALL/VERSION
-      echo '#!/bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo '' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo 'cd $SNAP_COMMON' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo 'bin/archethic_node foreground' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo 'exec "$@"' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      chmod +x $SNAPCRAFT_PART_INSTALL/bin/archethic_node_start
-      echo '#!/bin/bash' >$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      echo '' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      echo 'cd $SNAP_COMMON' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      echo 'bin/archethic_node stop' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      echo 'exec "$@"' >>$SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      chmod +x $SNAPCRAFT_PART_INSTALL/bin/archethic_node_stop
-      cp -p $SNAPCRAFT_PROJECT_DIR/snap/local/set-config $SNAPCRAFT_PART_INSTALL/bin/
+
+
